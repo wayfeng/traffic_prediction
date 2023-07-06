@@ -9,6 +9,7 @@ docker compose pull
 ## Run the EMQX and TDengine
 
 ```bash
+mkdir -p taos/{data,log}
 docker compose up -d mqtt tdengine
 ```
 
@@ -46,3 +47,7 @@ docker compose up -d grafana gcrnn
 ## Check Grafana Dashboard
 
 Visit `localhost:3000`, login as user `admin` with password `admin123`. Then find default dashboard `Velocity` in `General` folder.
+
+After running for a while, the dashboard looks like this.
+![dashboard](dashboard.png)
+
