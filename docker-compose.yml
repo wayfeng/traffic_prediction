@@ -1,0 +1,63 @@
+version: "3"
+
+networks:
+  net:
+
+services:
+  mqtt:
+    image: emqx:5.0.24
+    hostname: emqx
+    container_name: mqtt
+    ports:
+      - 1883:1883
+      - 18083:18083
+    networks:
+      - net
+  virtdev:
+    image: waynefeng/vsensor:latest
+    container_name: virtdev
+    entrypoint: ["/app/vsensor", "-f", "/app/config/config.yaml"]
+    volumes:
+      - ./vsensor/config:/app/config:ro
+    networks:
+      - net
+    depends_on:
+      - mqtt
+  gcrnn:
+    image: waynefeng/gcrnn:latest
+    container_name: gcrnn
+    entrypoint: ["/home/tdclient/gcrnn", "/home/tdclient/models/gc_10_lstm_64.xml"]
+    networks:
+      - net
+    depends_on:
+      - tdengine
+      - virtdev
+  tdengine:
+    image: tdengine/tdengine:2.6.0.10
+    container_name: tdengine
+    hostname: tdengine
+    volumes:
+      - ./taos/log:/var/log/taos
+      - ./taos/data:/var/lib/taos
+    networks:
+      - net
+    ports:
+      - 6030-6041:6030-6041
+      - 6030-6041:6030-6041/udp
+  grafana:
+    image: grafana/grafana:9.5.3
+    container_name: grafana
+    environment:
+      - no_proxy=tdengine
+      - NO_PROXY=tdengine
+      - GF_INSTALL_PLUGINS=tdengine-datasource
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    ports:
+      - 3000:3000
+    networks:
+      - net
+

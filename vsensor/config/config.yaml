@@ -1,0 +1,3 @@
+interval: 5000
+count: 0
+broker: tcp://mqtt:1883

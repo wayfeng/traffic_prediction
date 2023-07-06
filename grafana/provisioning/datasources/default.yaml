@@ -1,0 +1,12 @@
+apiVersion: 1
+
+datasources:
+  - name: TDengine
+    type: tdengine-datasource
+    access: proxy
+    url: http://tdengine:6041
+    isDefault: true
+    secureJsonData:
+      url: http://tdengine:6041
+      basicAuth: "cm9vdDp0YW9zZGF0YQ==" # print root:taosdata | base64
+
