@@ -1,0 +1,79 @@
+version: "3"
+
+networks:
+  iot:
+
+services:
+  mqtt:
+    image: eclipse-mosquitto:2.0
+    container_name: mosquitto
+    volumes:
+      - ./mosquitto/config:/mosquitto/config:ro
+    ports:
+      - 1883:1883
+    networks:
+      - iot
+  virtdev:
+    image: waynefeng/vsensor:latest
+    container_name: virtdev
+    entrypoint: ["/app/vsensor", "-f", "/app/config/config.yaml"]
+    volumes:
+      - ./vsensor/config:/app/config:ro
+    networks:
+      - iot
+    depends_on:
+      - mqtt
+  gcrnn:
+    image: waynefeng/gcrnn:latest
+    container_name: gcrnn
+    networks:
+      - iot
+    depends_on:
+      - tdengine
+      - virtdev
+      - mqtt
+  tdengine:
+    image: tdengine/tdengine:2.6.0.10
+    container_name: tdengine
+    hostname: tdengine
+    volumes:
+      - ./taos/log:/var/log/taos
+      - ./taos/data:/var/lib/taos
+    networks:
+      - iot
+    ports:
+      - 6030-6041:6030-6041
+      - 6030-6041:6030-6041/udp
+  telegraf:
+    image: telegraf:1.26
+    container_name: telegraf
+    environment:
+      - no_proxy=tdengine
+      - NO_PROXY=tdengine
+    volumes:
+      - ./telegraf/config/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    ports:
+      - 8092:8092/udp
+      - 8094:8094/tcp
+      - 8125:8125
+    networks:
+      - iot
+    depends_on:
+      - tdengine
+  grafana:
+    image: grafana/grafana:9.5.3
+    container_name: grafana
+    environment:
+      - no_proxy=tdengine
+      - NO_PROXY=tdengine
+      - GF_INSTALL_PLUGINS=tdengine-datasource
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    ports:
+      - 3000:3000
+    networks:
+      - iot
+

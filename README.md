@@ -51,3 +51,12 @@ Visit `localhost:3000`, login as user `admin` with password `admin123`. Then fin
 After running for a while, the dashboard looks like this.
 ![dashboard](dashboard.png)
 
+## Run demo with telegraf and eclipse-mosquitto
+
+We can use `eclipse-mosquitto` and `telegraf` instead of EMQX in this demo.
+```bash
+docker compose down
+docker compose -f docker-compose-telegraf.yml pull
+docker compose -f docker-compose-telegraf.yml up -d
+```
+After all containers are brought up successfully, visit `localhost:3000` to visit the dashboard.
